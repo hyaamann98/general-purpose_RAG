@@ -68,7 +68,7 @@ for msg in st.session_state.messages:
         if msg.get("sources"):
             with st.expander("参照元ファイル"):
                 for s in msg["sources"]:
-                    st.write(f"- {s}")
+                    st.write(f"- {os.path.basename(s)}")
 
 # ---- 入力欄 ----
 if question := st.chat_input("質問を入力してください"):
@@ -133,7 +133,7 @@ if question := st.chat_input("質問を入力してください"):
         if sources:
             with st.expander("参照元ファイル"):
                 for s in sources:
-                    st.write(f"- {s}")
+                    st.write(f"- {os.path.basename(s)}")
 
     st.session_state.messages.append(
         {"role": "assistant", "content": answer, "sources": sources}
