@@ -6,6 +6,11 @@ import streamlit as st
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
 st.set_page_config(page_title="社内文書 RAG チャット", page_icon="📄")
+st.markdown("""
+<style>
+footer {visibility: hidden;}
+</style>
+""", unsafe_allow_html=True)
 st.title("📄 社内文書 RAG チャット")
 
 # ---- サイドバー：文書アップロード ----
@@ -111,7 +116,18 @@ if question := st.chat_input("質問を入力してください"):
             except requests.exceptions.ConnectionError:
                 yield "APIサーバーに接続できません。サーバーが起動しているか確認してください。"
 
-        answer = st.write_stream(token_stream())
+        thinking = st.empty()
+        thinking.markdown("検索中...")
+
+        def stream_with_indicator():
+            first = True
+            for token in token_stream():
+                if first:
+                    thinking.empty()
+                    first = False
+                yield token
+
+        answer = st.write_stream(stream_with_indicator())
         sources = sources_holder
 
         if sources:
