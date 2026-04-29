@@ -1,7 +1,8 @@
+import json
 import os
 import shutil
-import tempfile
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from .dataload import DataLoad
@@ -14,8 +15,8 @@ from .retriever import Retriever
 app = FastAPI(title="RAG API")
 
 # 環境変数から設定を読み込む
-LLM_MODEL = os.getenv("LLM_MODEL", "gemma4:4b")
-EMBED_MODEL = os.getenv("EMBED_MODEL", "intfloat/multilingual-e5-base")
+LLM_MODEL = os.getenv("LLM_MODEL", "qwen2.5:1.5b")
+EMBED_MODEL = os.getenv("EMBED_MODEL", "intfloat/multilingual-e5-small")
 CHROMA_DIR = os.getenv("CHROMA_DIR", "./chroma_db")
 DOCS_DIR = os.getenv("DOCS_DIR", "./docs_storage")
 
@@ -28,7 +29,7 @@ retriever = Retriever(embedding=embedding, vector_store=vector_store, llm=llm)
 
 class QueryRequest(BaseModel):
     question: str
-    k: int = 5
+    k: int = 3
     threshold: float = None
 
 
@@ -54,6 +55,25 @@ def query(req: QueryRequest):
     sources = list({doc.metadata.get("source", "不明") for doc in docs})
 
     return QueryResponse(answer=answer, sources=sources)
+
+
+@app.post("/query/stream")
+def query_stream(req: QueryRequest):
+    if not req.question.strip():
+        raise HTTPException(status_code=400, detail="質問が空です。")
+
+    retriever.k = req.k
+    retriever.threshold = req.threshold
+
+    token_gen, docs = retriever.query_with_sources_stream(req.question)
+    sources = list({doc.metadata.get("source", "不明") for doc in docs})
+
+    def generate():
+        for token in token_gen:
+            yield token
+        yield f"__SOURCES__{json.dumps(sources, ensure_ascii=False)}"
+
+    return StreamingResponse(generate(), media_type="text/plain")
 
 
 @app.get("/documents")

@@ -16,7 +16,7 @@ services:
     environment:
       - OLLAMA_HOST=http://ollama:11434
       - LLM_MODEL=qwen2.5:3b
-      - EMBED_MODEL=intfloat/multilingual-e5-base
+      - EMBED_MODEL=intfloat/multilingual-e5-small
       - CHROMA_DIR=/app/chroma_db
       - DOCS_DIR=/app/docs_storage
       - PYTHONUNBUFFERED=1

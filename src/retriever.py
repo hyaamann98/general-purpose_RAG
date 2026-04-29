@@ -1,3 +1,4 @@
+from typing import Generator
 from langchain_core.documents import Document
 from .embedding import Embedding
 from .vector_store import ChromaStore
@@ -10,7 +11,7 @@ class Retriever:
         embedding: Embedding,
         vector_store: ChromaStore,
         llm: OllamaLLM,
-        k: int = 5,
+        k: int = 3,
         threshold: float = None,
     ):
         self.embedding = embedding
@@ -24,7 +25,8 @@ class Retriever:
 
     def _build_prompt(self, question: str, context: str) -> str:
         return (
-            f"以下のコンテキストを参考に質問に答えてください。\n\n"
+            f"以下のコンテキストのみを根拠として質問に答えてください。\n"
+            f"コンテキストに記載されていない情報は、自分の知識で補わずに「その情報はドキュメントに含まれていません。」と答えてください。\n\n"
             f"コンテキスト:\n{context}\n\n"
             f"質問: {question}\n"
             f"回答:"
@@ -43,3 +45,16 @@ class Retriever:
         prompt = self._build_prompt(question, context)
         answer = self.llm.generate(prompt)
         return answer, docs
+
+    def query_with_sources_stream(
+        self, question: str
+    ) -> tuple[Generator[str, None, None], list[Document]]:
+        query_embedding = self.embedding.embed_query(question)
+        docs = self.vector_store.search(query_embedding, k=self.k, threshold=self.threshold)
+        if not docs:
+            def _empty():
+                yield "関連するドキュメントが見つかりませんでした。"
+            return _empty(), []
+        context = self._build_context(docs)
+        prompt = self._build_prompt(question, context)
+        return self.llm.generate_stream(prompt), docs

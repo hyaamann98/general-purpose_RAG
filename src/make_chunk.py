@@ -3,7 +3,7 @@ from langchain_core.documents import Document
 
 class MakeChunk():
 
-    def __init__(self, chunk_size: int = 500, chunk_overlap: int = 50):
+    def __init__(self, chunk_size: int = 300, chunk_overlap: int = 30):
         self.splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,                    # チャンクの最大サイズ
             chunk_overlap=chunk_overlap,              # 重複させる文字数

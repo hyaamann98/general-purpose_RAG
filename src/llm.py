@@ -1,4 +1,5 @@
 import ollama
+from typing import Generator
 
 
 class OllamaLLM:
@@ -9,5 +10,16 @@ class OllamaLLM:
         response = ollama.chat(
             model=self.model,
             messages=[{"role": "user", "content": prompt}],
+            options={"num_predict": 512},
         )
         return response["message"]["content"]
+
+    def generate_stream(self, prompt: str) -> Generator[str, None, None]:
+        response = ollama.chat(
+            model=self.model,
+            messages=[{"role": "user", "content": prompt}],
+            stream=True,
+            options={"num_predict": 512},
+        )
+        for chunk in response:
+            yield chunk["message"]["content"]

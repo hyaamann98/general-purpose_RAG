@@ -1,3 +1,4 @@
+import json
 import os
 import requests
 import streamlit as st
@@ -49,7 +50,7 @@ with st.sidebar:
             st.write(f"- {os.path.basename(path)}")
 
     st.divider()
-    k = st.slider("参照するチャンク数（k）", min_value=1, max_value=10, value=5)
+    k = st.slider("参照するチャンク数（k）", min_value=1, max_value=10, value=3)
 
 # ---- チャット履歴の初期化 ----
 if "messages" not in st.session_state:
@@ -71,25 +72,48 @@ if question := st.chat_input("質問を入力してください"):
         st.markdown(question)
 
     with st.chat_message("assistant"):
-        with st.spinner("回答を生成中..."):
-            try:
-                res = requests.post(
-                    f"{API_URL}/query",
-                    json={"question": question, "k": k},
-                    timeout=300,
-                )
-                if res.ok:
-                    data = res.json()
-                    answer = data["answer"]
-                    sources = data.get("sources", [])
-                else:
-                    answer = f"エラーが発生しました: {res.text}"
-                    sources = []
-            except requests.exceptions.ConnectionError:
-                answer = "APIサーバーに接続できません。サーバーが起動しているか確認してください。"
-                sources = []
+        sources_holder = []
 
-        st.markdown(answer)
+        def token_stream():
+            try:
+                with requests.post(
+                    f"{API_URL}/query/stream",
+                    json={"question": question, "k": k},
+                    stream=True,
+                    timeout=300,
+                ) as r:
+                    if not r.ok:
+                        yield f"エラーが発生しました: {r.text}"
+                        return
+                    buffer = ""
+                    marker = "__SOURCES__"
+                    for raw in r.iter_content(chunk_size=None, decode_unicode=True):
+                        buffer += raw
+                        if marker in buffer:
+                            idx = buffer.index(marker)
+                            text_before = buffer[:idx]
+                            if text_before:
+                                yield text_before
+                            try:
+                                sources_holder.extend(
+                                    json.loads(buffer[idx + len(marker):])
+                                )
+                            except Exception:
+                                pass
+                            return
+                        # マーカーが途中で分断される可能性を考慮して末尾を保持
+                        safe_end = max(0, len(buffer) - len(marker))
+                        if safe_end > 0:
+                            yield buffer[:safe_end]
+                            buffer = buffer[safe_end:]
+                    if buffer:
+                        yield buffer
+            except requests.exceptions.ConnectionError:
+                yield "APIサーバーに接続できません。サーバーが起動しているか確認してください。"
+
+        answer = st.write_stream(token_stream())
+        sources = sources_holder
+
         if sources:
             with st.expander("参照元ファイル"):
                 for s in sources:
