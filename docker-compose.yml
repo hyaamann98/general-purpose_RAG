@@ -1,0 +1,38 @@
+services:
+
+  ollama:
+    image: ollama/ollama
+    volumes:
+      - ollama_data:/root/.ollama
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./chroma_db:/app/chroma_db
+      - ./docs_storage:/app/docs_storage
+      - ~/.cache/huggingface:/root/.cache/huggingface
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - LLM_MODEL=qwen2.5:3b
+      - EMBED_MODEL=intfloat/multilingual-e5-base
+      - CHROMA_DIR=/app/chroma_db
+      - DOCS_DIR=/app/docs_storage
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - ollama
+
+  ui:
+    build:
+      context: .
+      dockerfile: ui/Dockerfile
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://app:8000
+    depends_on:
+      - app
+
+volumes:
+  ollama_data:

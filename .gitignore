@@ -1,0 +1,11 @@
+.venv
+
+docs/
+
+sample_dat/*
+
+chroma_db/*
+
+src/__pycache__
+
+docs_storage/*

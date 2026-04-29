@@ -1,0 +1,12 @@
+.venv
+__pycache__
+*.pyc
+*.pyo
+.git
+.gitignore
+chroma_db
+faiss_index
+docs_storage
+sample_dat
+docs/
+*.md
