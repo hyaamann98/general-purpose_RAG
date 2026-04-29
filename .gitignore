@@ -1,6 +1,7 @@
 .venv
 
-docs/
+docs/*.md
+docs/img/refer_file.png
 
 sample_dat/*
 
