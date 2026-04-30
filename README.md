@@ -1,4 +1,4 @@
-# general-purpose RAG system
+# Fully Local RAG Pilot System
 
 > ローカル完結型の汎用 RAG（検索拡張生成）システム
 
@@ -110,8 +110,10 @@ python query_answer.py --model qwen2.5:3b --k 5
 ### ドキュメント登録フロー（ベクトルDB 構築）
 画面左側の「↑Upload」（赤枠内）をクリックする。
 <img src="./docs/img/SaveDB_1.png">  
+<br>
 アップロードするドキュメントファイルを選択する。
 <img src="./docs/img/SaveDB_2.png">  
+<br>
 「アップロード」（赤枠内）をクリックする。
 画像の通り、「xxx.pdfを処理しました。」(緑色枠内)と表示されれば、アップロードしたドキュメントファイル内の文章は、
 ベクトル化されて、DBに登録されたことになる。
@@ -120,8 +122,10 @@ python query_answer.py --model qwen2.5:3b --k 5
 ### クエリ投入フロー（回答生成）
 ページ下部の検索欄に検索内容を記述し、右横の「↑」をクリックする。
 <img src="./docs/img/Query_1.png">  
+<br>
 RAGシステムが検索中は、「検索中...」と表示される。
 <img src="./docs/img/Query_2.png">  
+<br>
 検索が終了すれば、結果が参照元ファイルとともに表示される。
 <img src="./docs/img/Query_3.png">
 
