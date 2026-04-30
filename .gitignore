@@ -10,3 +10,7 @@ chroma_db/*
 src/__pycache__
 
 docs_storage/*
+
+tests/__pycache__
+
+tests/unit/__pycache__
